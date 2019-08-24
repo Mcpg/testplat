@@ -16,7 +16,8 @@ You need:
  * Open Watcom,
  * Netwide Assembler (nasm),
  * *nix or Windows shell
- * Python 3
+ * Python 3:
+   * Pillow Python library
 
 On Linux you can use `./build.sh [module]`, `./buildall.sh` and `./clean.sh`.
 On Windows you can use `build.bat [module]`, `buildall.bat` and `clean.bat`.

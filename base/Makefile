@@ -4,6 +4,8 @@ include ../config.mk
 SRC_DIR = src
 BIN_DIR = bin
 
+CFLAGS := $(CFLAGS) -i$(SRC_DIR)
+
 TARGET = ../gamedir/GAME.EXE
 
 C_OBJECTS = $(patsubst $(SRC_DIR)/%.c,$(BIN_DIR)/%.obj,$(wildcard $(SRC_DIR)/*.c))
