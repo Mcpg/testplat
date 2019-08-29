@@ -4,6 +4,7 @@
 #include <graph.h>
 #include <i86.h>
 #include <malloc.h>
+#include "pit.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -99,6 +100,10 @@ void load_ui()
     video_init();
     _status_write_done();
     
+    _status(i += 2, "Initializing PIT...");
+    pit_init();
+    _status_write_done();
+
 #ifdef DEBUG
     _status(
         i += 2,
