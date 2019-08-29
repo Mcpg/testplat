@@ -94,3 +94,7 @@ void video_render()
     _fmemcpy(vga_buffer, video_buffer, SCREEN_WIDTH * SCREEN_HEIGHT);
 }
 
+void video_cleanup()
+{
+    _ffree(video_buffer);
+}

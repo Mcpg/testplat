@@ -203,3 +203,9 @@ uint8_t sprite_get_pixel(sprite_t __far* s, int x, int y)
     }
     return s->data[(y * s->width) + x];
 }
+
+void resource_cleanup()
+{
+    _ffree(sprite_segment);
+    free(sprites);
+}

@@ -30,4 +30,6 @@ extern void loader_error(const char*);
 
 extern uint8_t sprite_get_pixel(sprite_t __far* s, int x, int y);
 
+extern void resource_cleanup();
+
 #endif

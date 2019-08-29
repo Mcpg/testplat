@@ -21,4 +21,6 @@ extern void video_draw_sprite(sprite_t __far* s, int16_t tx, int16_t ty);
 
 extern void video_render();
 
+extern void video_cleanup();
+
 #endif

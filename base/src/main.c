@@ -1,25 +1,31 @@
+#include "gameloop.h"
+#include "game.h"
+#include "pit.h"
 #include "resource.h"
-#include <stdio.h>
+#include <stdlib.h>
 #include "video.h"
-#include <stddef.h>
-#include <graph.h>
-#include <string.h>
 
-extern void hang();
-#pragma aux hang = \
-    "cli" \
-    "hlt";
+void shutdown()
+{
+    video_exit();
+    video_cleanup();
+    pit_reset();
+    exit(0);
+}
 
 int main(int argc, char* argv[])
 {
     load_ui();
 
-    video_clear();
-    video_draw_sprite(sprites[0], 10, 10);
-    video_render();
-    
+    game_running = 1;
+    pit_hook(game_loop);
 
-    hang();
-    video_exit();
+    /* While the game is running, keep on halting the CPU until IRQ0 is fired.
+       Game's logic is handled there. */
+    while (game_running) _asm {
+        hlt
+    }
+
+    shutdown();
     return 0;
 }
