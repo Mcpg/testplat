@@ -5,9 +5,9 @@ MS-DOS computers.
 ## Hardware requirements
 They're not yet guaranteed, they might be too high or too low to match the game,
 since it's still in development.
- * Free RAM for the game: around 100 kB (probably way less)
+ * Free RAM for the game: around 256 kB
  * CPU: 80286+
- * Graphics: EGA+ or compatible
+ * Graphics: VGA or compatible
  * MS-DOS 2.x+
  
 ## Building

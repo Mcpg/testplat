@@ -1,103 +1,200 @@
 #include "resource.h"
+#include <conio.h>
+#include "game.h"
+#include <graph.h>
+#include <i86.h>
 #include <malloc.h>
-#include <stddef.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "video.h"
 
-#define DATA_FILE_PATH "DATA.DAT"
-#define DATA_READ_BUF ((uint16_t) 256)
+#define DEBUG
 
-data_node_t __far** data_nodes;
-uint8_t __far* data_nodes_raw;
-uint16_t data_nodes_size;
-uint16_t data_node_amount;
+uint8_t sprite_amount;
+sprite_t __far** sprites;
 
-extern void __far* near_to_far(void*);
-#pragma aux near_to_far = \
-        "nop"             \
-        parm [ax]         \
-        value [ds ax];
+uint16_t sprite_segment_size;
+uint8_t __far* sprite_segment;
 
-sprite_t* node_get_sprite(data_node_t __far* node)
+static void _outtext_centered(int y, const char* text)
 {
-    if (node->type != NODE_SPRITE)
-        return NULL;
+    int len = strlen(text);
+    if (len > 80)
+        return;
     
-    return (sprite_t*) (
-        (uintptr_t) node + sizeof(data_node_t) + node->name_length
-    );
+    _settextposition(y, 40 - len / 2);
+    _outtext(text);
 }
 
-void load_data()
+static void _outtext_ralign(int y, const char* text)
 {
-    uint16_t i;
-    uint8_t buffer[DATA_READ_BUF];
-    uint8_t __far* buf_faddr = near_to_far(buffer);
-    FILE* f;
-    uint32_t file_size;
-    uint16_t offset;
-    uint16_t read_amount;
+    int len = strlen(text);
+    if (len > 80)
+        return;
     
-    f = fopen(DATA_FILE_PATH, "r");
+    _settextposition(y, 80 - len);
+    _outtext(text);
+}
+
+static void _status(int y, const char* desc)
+{
+    _settextposition(y, 3);
+    _settextcolor(0x09);
+    _outtext("* ");
+    _settextcolor(0x0F);
+    _outtext(desc);
+}
+
+static void _status_write_done()
+{
+    _settextcolor(0x0A);
+    _outtext(" DONE");
+}
+
+void load_ui()
+{
+    int i;
+    union REGS regs;
+    
+    _setvideomode(_TEXTC80);
+    regs.w.ax = 0x1003;
+    regs.h.bl = 0x00;
+    int86(0x10, &regs, &regs);
+    
+    _settextcolor(0x09);
+    
+    for (i = 1; i <= 80; i++)
+    {
+        _settextposition(1, i);
+        _outtext("=");
+        _settextposition(3, i);
+        _outtext("=");
+        _settextposition(24, i);
+        _outtext("=");
+    }
+    
+    _settextcolor(0x0E);
+    _outtext_centered(2, "Unnamed game loader");
+    
+    _settextcolor(0x08);
+    _outtext_ralign(25, "Version " VERSION);
+    
+    i = 3;
+    
+    _status(i += 2, "Loading sprites from SPRITES.DAT...");
+    load_sprites();
+    _status_write_done();
+    
+    _status(i += 2, "Loading animations from ANIM.DAT...");
+    
+    _status_write_done();
+    
+    _status(i += 2, "Loading tileset from TILESET.DAT...");
+    
+    _status_write_done();
+
+    _status(i += 2, "Initializing video system...");
+    video_init();
+    _status_write_done();
+    
+#ifdef DEBUG
+    _status(
+        i += 2,
+        "DBG: Properly loaded game's assets. Press any key to jump to video mode."
+    );
+    getch();
+#endif
+    
+    video_enter();
+    
+}
+
+void loader_error(const char* text)
+{
+    _settextcolor(0x0C);
+    _outtext(" ERROR\n    ");
+    _outtext(text);
+    _settextposition(24, 0);
+    exit(1);
+}
+
+#define SPRITE_BUFFER_SIZE 16
+
+void load_sprites()
+{
+    FILE* f;
+    uint8_t far* current_sprite;
+    uint16_t offset = 0;
+    uint16_t i;
+    uint8_t buffer[SPRITE_BUFFER_SIZE];
+    
+    f = fopen(SPRITES_FILENAME, "rb");
     if (f == NULL)
     {
-        printf("ERROR: Could not open DATA.DAT!\n");
-        exit(1);
+        loader_error("Could not open SPRITES.DAT!");
         return;
     }
     
-    /* Get the file size */
+    /* Read the sprite amount */
+    if (fread(&sprite_amount, 1, 1, f) != 1)
+    {
+        loader_error("Incorrect format of SPRITES.DAT!");
+        return;
+    }
+    
+    /* Get the segment size */
     fseek(f, 0, SEEK_END);
-    file_size = ftell(f);
-    fseek(f, 0, SEEK_SET);
+    sprite_segment_size = ftell(f);
+    fseek(f, 1, SEEK_SET);
     
-    if (file_size >= 0x10000)
+    if (sprite_segment_size == 0)
     {
-        printf("ERROR: DATA.DAT is too big! Max allowed size is 64k\n");
         fclose(f);
-        exit(1);
-        return;
-    }
-    
-    if (fread(&data_node_amount, sizeof(data_node_amount), 1, f) != 1)
-    {
-        printf("ERROR: DATA.DAT read error (incorrect format?)\n");
-        fclose(f);
-        exit(1);
-        return;
-    }
-    
-    if (data_node_amount == 0)
-    {
-        printf("ERROR: 0 data nodes?\n");
-        fclose(f);
-        exit(1);
-    }
-
-    /* Directly allocate a separate segment for data */
-    data_nodes_raw = (uint8_t __far*) _fmalloc((size_t) file_size & 0xFFFF - 2);
-    if (data_nodes_raw == NULL)
-    {
-        printf("ERROR: Could not allocate enough memory for game data!\n");
-        exit(1);
         return;
     }
 
-    /* Read the file in 256 byte chunks, since there isn't anything like
-       _fread, unfortuantely.
-       
-       TODO: Rewrite this part of file reading in Assembly? */
-    for (i = file_size & 0xFFFF; i > 0; i -= DATA_READ_BUF)
+    /* Align the segment size to 16 */
+    if (sprite_segment_size & 0xF != 0)
     {
-        read_amount = i < DATA_READ_BUF ? i : DATA_READ_BUF;
-        fread(&buffer, read_amount, 1, f);
-        _fmemcpy(data_nodes_raw + read_amount, buf_faddr, read_amount);
-        
-        offset += read_amount;
-        if (i < DATA_READ_BUF)
-            break;
+        sprite_segment_size &= ~0xF;
+        sprite_segment_size += 16;
     }
     
-    fclose(f);
+    sprite_segment = _fmalloc(sprite_segment_size);
+    if (!sprite_segment)
+    {
+        loader_error("Could not allocate enough memory for sprites!");
+        return;
+    }
+    
+    /* Read the sprite data and copy it into the sprite segment */
+    do
+    {
+        i = fread(&buffer, SPRITE_BUFFER_SIZE, 1, f);
+        _fmemcpy(sprite_segment + offset, buffer, SPRITE_BUFFER_SIZE);
+        offset += SPRITE_BUFFER_SIZE;
+    } while (i != 0);
+    
+    /* Create the array with sprite locations */
+    sprites = (sprite_t __far**) malloc(sizeof(sprite_t __far*)*sprite_amount);
+    current_sprite = sprite_segment;
+    
+    for (i = 0; i < sprite_amount; i++)
+    {
+        sprites[i] = (sprite_t __far*) current_sprite;
+
+        current_sprite += sizeof(sprite_t)
+                + sprites[i]->width * sprites[i]->height - 1;
+    }
+}
+
+uint8_t sprite_get_pixel(sprite_t __far* s, int x, int y)
+{
+    if (x < 0 || y < 0 || x >= s->width || y >= s->height)
+    {
+        return ~0;
+    }
+    return s->data[(y * s->width) + x];
 }

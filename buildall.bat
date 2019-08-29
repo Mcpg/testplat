@@ -1,3 +1,4 @@
 @echo off
 
-build.bat base
+call build.bat data
+call build.bat base
