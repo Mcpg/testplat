@@ -5,6 +5,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <stdlib.h>
+#include <graph.h>
+
+#define PIC0_COMMAND 0x20
+#define PIC_EOI_CMD  0x20
+
 #define PIT_CHANNEL_0 0x40
 #define PIT_CHANNEL_2 0x42
 #define PIT_MCR       0x43
@@ -17,6 +23,8 @@ static void interrupt _pit_irq0(union INTPACK regs)
 {
     if (current_handler)
         current_handler();
+
+    outp(PIC0_COMMAND, PIC_EOI_CMD); /* IRQ0 EOI */
 }
 
 void pit_init()
@@ -28,8 +36,8 @@ void pit_init()
 
     /* Channel 0, write low and high byte for mode 2 */
     outp(PIT_MCR, 0x34);
-    outp(PIT_MCR, PIT_VALUE & 0xFF);
-    outp(PIT_MCR, (PIT_VALUE >> 8) & 0xFF);
+    outp(PIT_CHANNEL_0, PIT_VALUE & 0xFF);
+    outp(PIT_CHANNEL_0, (PIT_VALUE >> 8) & 0xFF);
 
     _asm { sti }
 }
@@ -43,8 +51,8 @@ void pit_reset()
 {
     /* Reset the PIT to the standard channel 0 (65536, 18.2 Hz) */
     outp(PIT_MCR, 0x34);
-    outp(PIT_MCR, 0x00);
-    outp(PIT_MCR, 0x00);
+    outp(PIT_CHANNEL_0, 0x00);
+    outp(PIT_CHANNEL_0, 0x00);
 
     _dos_setvect(0x08, (void (interrupt *)()) _old_irq0);
 }
