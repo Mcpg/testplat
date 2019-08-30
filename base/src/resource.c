@@ -3,6 +3,7 @@
 #include "game.h"
 #include <graph.h>
 #include <i86.h>
+#include "input.h"
 #include <malloc.h>
 #include "pit.h"
 #include <stdio.h>
@@ -59,6 +60,8 @@ void load_ui()
     int i;
     union REGS regs;
     
+    /* TODO: cleanup loader UI's code and maybe move it to a separate file? */
+
     _setvideomode(_TEXTC80);
     regs.w.ax = 0x1003;
     regs.h.bl = 0x00;
@@ -99,18 +102,14 @@ void load_ui()
     _status(i += 2, "Initializing video system...");
     video_init();
     _status_write_done();
+
+    _status(i += 2, "Initializing input system...");
+    input_init();
+    _status_write_done();
     
     _status(i += 2, "Initializing PIT...");
     pit_init();
     _status_write_done();
-
-#ifdef DEBUG
-    _status(
-        i += 2,
-        "DBG: Properly loaded game's assets. Press any key to jump to video mode."
-    );
-    getch();
-#endif
     
     video_enter();
     

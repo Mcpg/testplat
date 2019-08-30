@@ -1,5 +1,6 @@
 #include "gameloop.h"
 #include "game.h"
+#include "input.h"
 #include "pit.h"
 #include "resource.h"
 #include <stdlib.h>
@@ -9,6 +10,7 @@ void shutdown()
 {
     video_exit();
     video_cleanup();
+    input_cleanup();
     pit_reset();
     exit(0);
 }

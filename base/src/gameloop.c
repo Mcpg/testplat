@@ -1,5 +1,6 @@
 #include "gameloop.h"
 #include "game.h"
+#include "input.h"
 #include <stdlib.h>
 #include "video.h"
 
@@ -15,13 +16,23 @@ void game_loop()
 
     if (loop_in_progress)
     {
-        dropped_frames++;
+        /* This shouldn't happen because of how a 8259 PIC behaves. I'm gonna
+           leave it here regardless, just in case. */
         return;
     }
 
     loop_in_progress = 1;
-    video_clear();
 
+    /* Logic update */
+    input_process();
+
+    
+
+    /* Video update */
+    video_clear();
     video_render();
+
+
+
     loop_in_progress = 0;
 }

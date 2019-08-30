@@ -2,14 +2,10 @@
 #include <conio.h>
 #include <dos.h>
 #include <i86.h>
+#include "pic.h"
 #include <stddef.h>
 #include <stdint.h>
 
-#include <stdlib.h>
-#include <graph.h>
-
-#define PIC0_COMMAND 0x20
-#define PIC_EOI_CMD  0x20
 
 #define PIT_CHANNEL_0 0x40
 #define PIT_CHANNEL_2 0x42
@@ -24,7 +20,7 @@ static void interrupt _pit_irq0(union INTPACK regs)
     if (current_handler)
         current_handler();
 
-    outp(PIC0_COMMAND, PIC_EOI_CMD); /* IRQ0 EOI */
+    PIC0_EOI(); /* IRQ0 EOI */
 }
 
 void pit_init()
