@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "uart.h"
 #include "video.h"
 
 #define DEBUG
@@ -86,6 +87,10 @@ void load_ui()
     _outtext_ralign(25, "Version " VERSION);
     
     i = 3;
+
+    _status(i += 2, "Initializing UART...");
+    uart_init();
+    _status_write_done();
     
     _status(i += 2, "Loading sprites from SPRITES.DAT...");
     load_sprites();

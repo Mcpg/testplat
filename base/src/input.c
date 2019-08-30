@@ -56,7 +56,7 @@ static uint8_t _input_get_release_action(uint16_t scancode)
 
     for (i = 0; i < INPUT_AMOUNT; i++)
     {
-        if (input_rel_map[i] == scancode)
+        if ((input_rel_map[i] & scancode) == scancode)
             return i;
     }
 
@@ -69,7 +69,7 @@ static uint8_t _input_get_press_action(uint16_t scancode)
 
     for (i = 0; i < INPUT_AMOUNT; i++)
     {
-        if (input_press_map[i] == scancode)
+        if ((input_press_map[i] & scancode) == scancode)
             return i;
     }
 

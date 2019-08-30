@@ -24,8 +24,11 @@ int main(int argc, char* argv[])
 
     /* While the game is running, keep on halting the CPU until IRQ0 is fired.
        Game's logic is handled there. */
-    while (game_running) _asm {
-        hlt
+    while (game_running)
+    {
+        _asm {
+            hlt
+        }
     }
 
     shutdown();

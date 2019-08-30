@@ -26,13 +26,9 @@ void game_loop()
     /* Logic update */
     input_process();
 
-    
-
     /* Video update */
     video_clear();
     video_render();
-
-
 
     loop_in_progress = 0;
 }

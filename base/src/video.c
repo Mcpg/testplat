@@ -43,7 +43,7 @@ void video_exit()
 
 void video_clear()
 {
-    _fmemset(video_buffer, 15, SCREEN_WIDTH * SCREEN_HEIGHT);
+    _fmemset(video_buffer, 55, SCREEN_WIDTH * SCREEN_HEIGHT);
 }
 
 void video_draw_rect(
