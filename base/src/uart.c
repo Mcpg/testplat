@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 
+static uint8_t uart_initialized = 0;
+
 void uart_init()
 {
     /* TODO: potential UART cleanup after configuration? */
@@ -17,14 +19,19 @@ void uart_init()
     outp(UART_PORT + 2, 0xC7);
     outp(UART_PORT + 4, 0x0B);
 
+    uart_initialized = 1;
+
     uart_prints("\n\n");
     uart_prints("Initialized UART controller\n");
     uart_printf(" Game version: %s\n", VERSION);
 }
 
-void uart_prints(char* text)
+void uart_prints(const char* text)
 {
     uint16_t i;
+
+    if (!uart_initialized)
+        return;
 
     for (i = 0; text[i]; i++)
     {
@@ -36,11 +43,14 @@ void uart_prints(char* text)
     }
 }
 
-void uart_printf(char* format, ...)
+void uart_printf(const char* format, ...)
 {
     char buffer[UART_STRING_BUFFER];
     int16_t amount;
     va_list vargs;
+
+    if (!uart_initialized)
+        return;
 
     memset(&buffer, 0x00, sizeof(buffer));
 

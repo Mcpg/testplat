@@ -1,6 +1,7 @@
 #include "input.h"
 #include <bios.h>
 #include <dos.h>
+#include "debug.h"
 #include <i86.h>
 #include "pic.h"
 #include <string.h>
@@ -14,16 +15,19 @@ static void interrupt (*_old_irq2)();
 uint8_t input_any_key_pressed = 0;
 
 uint16_t input_press_map[INPUT_AMOUNT] = {0};
-uint16_t input_rel_map[INPUT_AMOUNT];
+uint16_t input_rel_map[INPUT_AMOUNT] = {0};
 
 uint8_t input_just_pressed[INPUT_AMOUNT] = {0};
 uint8_t input_pressed[INPUT_AMOUNT] = {0};
 
-static void interrupt _irq1_handler(union INTPACK regs)
+static void interrupt _kbd_irq1(union INTPACK regs)
 {
     static uint8_t partial_scancode = 0;
 
     uint8_t scancode;
+
+    DPRINT2("_irq1_handler");
+
 
     if (_key_buffer_top >= KEY_BUFFER_SIZE)
         return; /* uh oh buffer is fuuuuulll */
@@ -97,8 +101,14 @@ void input_init()
     input_press_map[INPUT_RIGHT] = 0xE0CD;
     input_rel_map[INPUT_RIGHT]   = 0xE0CD;
 
+    _asm { cli }
+
     _old_irq2 = _dos_getvect(0x09);
-    _dos_setvect(0x09, _irq1_handler);
+    _dos_setvect(0x09, _kbd_irq1);
+
+    _asm { sti }
+
+    DPRINT2("_old_irq2 = %08X", _old_irq2);
 }
 
 void input_process()

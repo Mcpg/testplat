@@ -1,5 +1,6 @@
 #include "resource.h"
 #include <conio.h>
+#include "debug.h"
 #include "game.h"
 #include <graph.h>
 #include <i86.h>
@@ -48,6 +49,9 @@ static void _status(int y, const char* desc)
     _outtext("* ");
     _settextcolor(0x0F);
     _outtext(desc);
+
+    uart_prints((char*) desc);
+    uart_prints("\n");
 }
 
 static void _status_write_done()
@@ -91,7 +95,9 @@ void load_ui()
     _status(i += 2, "Initializing UART...");
     uart_init();
     _status_write_done();
-    
+
+    DPRINT1("Debug level: %d", DEBUG_LEVEL)
+
     _status(i += 2, "Loading sprites from SPRITES.DAT...");
     load_sprites();
     _status_write_done();
