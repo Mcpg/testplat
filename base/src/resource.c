@@ -119,7 +119,7 @@ void load_ui()
     _status_write_done();
     
     _status(i += 2, "Initializing PIT...");
-    pit_init();
+    pit_init(PIT_60HZ);
     _status_write_done();
     
     video_enter();

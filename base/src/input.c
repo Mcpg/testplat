@@ -26,9 +26,6 @@ static void interrupt _kbd_irq1(union INTPACK regs)
 
     uint8_t scancode;
 
-    DPRINT2("_irq1_handler");
-
-
     if (_key_buffer_top >= KEY_BUFFER_SIZE)
         return; /* uh oh buffer is fuuuuulll */
 
@@ -94,11 +91,11 @@ void input_init()
     input_rel_map[INPUT_DOWN]    = 0xE0D0;
     
     /* Left arrow key */
-    input_press_map[INPUT_LEFT]  = 0xE0CB;
+    input_press_map[INPUT_LEFT]  = 0xE04B;
     input_rel_map[INPUT_LEFT]    = 0xE0CB;
 
     /* Right arrow key */
-    input_press_map[INPUT_RIGHT] = 0xE0CD;
+    input_press_map[INPUT_RIGHT] = 0xE04D;
     input_rel_map[INPUT_RIGHT]   = 0xE0CD;
 
     _asm { cli }
@@ -126,6 +123,7 @@ void input_process()
         action = _input_get_press_action(scancode);
         if (action != INPUT_AMOUNT)
         {
+            DPRINT2("action_just_pressed[%d] = 1", action);
             input_just_pressed[action] = 1;
             input_pressed[action] = 1;
             continue;
@@ -134,6 +132,7 @@ void input_process()
         action = _input_get_release_action(scancode);
         if (action != INPUT_AMOUNT)
         {
+            DPRINT2("input_released[%d] = 1", action);
             input_pressed[action] = 0;
             continue;
         }

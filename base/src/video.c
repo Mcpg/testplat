@@ -5,6 +5,8 @@
 #include <string.h>
 
 static uint8_t far* video_buffer;
+static uint16_t video_buffer_segment;
+
 static uint8_t far* vga_buffer = (uint8_t far*) 0xA0000000;
 
 static inline void _video_set_pixel(uint16_t x, uint16_t y, uint8_t color)
@@ -15,6 +17,7 @@ static inline void _video_set_pixel(uint16_t x, uint16_t y, uint8_t color)
 void video_init()
 {
     video_buffer = _fmalloc(SCREEN_WIDTH * SCREEN_HEIGHT);
+    video_buffer_segment = ((uint32_t) video_buffer >> 16) & 0xFFFF;
 
     if (video_buffer == NULL)
     {

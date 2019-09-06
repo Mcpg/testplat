@@ -6,11 +6,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-
 #define PIT_CHANNEL_0 0x40
 #define PIT_CHANNEL_2 0x42
 #define PIT_MCR       0x43
-#define PIT_VALUE     19886 /* Equals to roughly 60 Hz */
 
 static pit_int_handler_t current_handler = NULL;
 static uint32_t _old_irq0;
@@ -23,7 +21,7 @@ static void interrupt _pit_irq0(union INTPACK regs)
     PIC0_EOI(); /* IRQ0 EOI */
 }
 
-void pit_init()
+void pit_init(uint16_t timer_divider)
 {
     _asm { cli }
 
@@ -32,8 +30,8 @@ void pit_init()
 
     /* Channel 0, write low and high byte for mode 2 */
     outp(PIT_MCR, 0x34);
-    outp(PIT_CHANNEL_0, PIT_VALUE & 0xFF);
-    outp(PIT_CHANNEL_0, (PIT_VALUE >> 8) & 0xFF);
+    outp(PIT_CHANNEL_0, timer_divider & 0xFF);
+    outp(PIT_CHANNEL_0, (timer_divider >> 8) & 0xFF);
 
     _asm { sti }
 }
